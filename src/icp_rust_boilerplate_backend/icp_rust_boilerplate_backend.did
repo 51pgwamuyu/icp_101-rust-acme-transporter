@@ -25,28 +25,28 @@ type RaiseQuestion = record {
   created_at : nat64;
 };
 type RaiseQuestionPayload = record { question : text; usernameemail : text };
-type Result = variant { Ok : vec Transporter; Err : text };
-type Result_1 = variant { Ok : Transporter; Err : text };
-type Result_2 = variant { Ok : Complain; Err : text };
-type Result_3 = variant { Ok : RaiseQuestion; Err : text };
-type Result_4 = variant { Ok : Transporter; Err : Errors };
-type Result_5 = variant { Ok : UsersComplainAboutTransporter; Err : text };
+type Result = variant { Ok : Transporter; Err : text };
+type Result_1 = variant { Ok : vec Transporter; Err : text };
+type Result_2 = variant { Ok : Transporter; Err : Errors };
+type Result_3 = variant { Ok : Complain; Err : text };
+type Result_4 = variant { Ok : UsersComplainAboutTransporter; Err : text };
+type Result_5 = variant { Ok : RaiseQuestion; Err : text };
 type SearchPayload = record { transportername : text };
 type Transporter = record {
   id : nat64;
-  websiteurl : text;
   owner : text;
   name : text;
   created_at : nat64;
   trucknumber : text;
+  phonenumber : text;
   serviceemail : text;
   capacityweight : text;
   route : text;
 };
 type TransporterPayload = record {
-  websiteurl : text;
   ownername : text;
   trucknumber : text;
+  phonenumber : text;
   serviceemail : text;
   capacityweight : text;
   transport_name : text;
@@ -54,9 +54,9 @@ type TransporterPayload = record {
 };
 type UpdateTransporterPayload = record {
   id : nat64;
-  websiteurl : text;
   ownername : text;
   trucknumber : text;
+  phonenumber : text;
   serviceemail : text;
   capacityweight : text;
   transport_name : text;
@@ -76,12 +76,12 @@ type UsersComplainAboutTransporter = record {
   transportername : text;
 };
 service : {
-  get_all_transporters : () -> (Result) query;
-  get_transporter : (SearchPayload) -> (Result_1) query;
-  launch_a_complain : (ComplainPayload) -> (Result_2);
-  raise_question : (RaiseQuestionPayload) -> (Result_3);
-  registertransporter : (TransporterPayload) -> (Result_1);
-  remove_your_truck_from_acme : (nat64, DeletePayload) -> (Result_4);
-  update_transporter : (UpdateTransporterPayload) -> (Result_1);
-  user_complain : (UserComplainPayload) -> (Result_5);
+  get_a_transporter : (SearchPayload) -> (Result) query;
+  get_all_transporters : () -> (Result_1) query;
+  registertransporter : (TransporterPayload) -> (Result);
+  remove_your_truck_from_company : (nat64, DeletePayload) -> (Result_2);
+  transporter_launch_a_complain : (ComplainPayload) -> (Result_3);
+  transporter_update_details : (nat64, UpdateTransporterPayload) -> (Result);
+  users_complain : (UserComplainPayload) -> (Result_4);
+  users_raise_question : (RaiseQuestionPayload) -> (Result_5);
 }

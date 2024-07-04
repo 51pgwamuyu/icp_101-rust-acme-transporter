@@ -168,7 +168,6 @@ struct UpdateTransporterPayload{
     route:String,
     trucknumber:String,
     capacityweight:String,
-    id:u64
 }
 #[derive(candid::CandidType,Serialize,Deserialize,Default)]
 struct DeletePayload{
@@ -348,7 +347,7 @@ return Ok(new_question);
 
 //transporter update details of his truck
 #[ic_cdk::update]
-fn transporter_update_details(payload:UpdateTransporterPayload)->Result<Transporter,String>{
+fn transporter_update_details(id:u64,payload:UpdateTransporterPayload)->Result<Transporter,String>{
     if payload.serviceemail.is_empty()
         && payload.ownername.is_empty()
         && payload.transport_name.is_empty()
@@ -363,34 +362,29 @@ fn transporter_update_details(payload:UpdateTransporterPayload)->Result<Transpor
      if !payload.serviceemail.contains('@') {
         return Err("Invalid email format".to_string());
     }
-    let transporters=TRANSPORTER_STORAGE.with(|storage|{
-        let transporters=storage.borrow().iter().find(|(_,val)|val.owner==payload.ownername);
-    match transporters{
-        Some((val,_))=>{
-            let updated_transporter=Transporter{
-                id:payload.id,
-                owner:payload.ownername,
-                name:payload.transport_name,
-                serviceemail:payload.serviceemail,
-                phonenumber:payload.phonenumber,
-                capacityweight:payload.capacityweight,
-                route:payload.route,
-                trucknumber:payload.trucknumber,
-                created_at:time(),
 
-            };
-            storage.borrow_mut().insert(val,updated_transporter.clone());
-            Ok(updated_transporter)
-        }
-        None=>Err("Transporter not found".to_string()),
+match TRANSPORTER_STORAGE.with(|service|service.borrow().get(&id)){
+    Some(mut trans)=>{
+                        trans.owner=payload.ownername;
+                        trans.name=payload.transport_name;
+                        trans.serviceemail=payload.serviceemail;
+                        trans.phonenumber=payload.phonenumber;
+                        trans.capacityweight=payload.capacityweight;
+                        trans.route=payload.route;
+                        trans.trucknumber=payload.trucknumber;
+                        do_insert(&trans);
+                        Ok(trans)
+                        
     }
-});
-transporters
+    None=>Err("could not update transporter details".to_string()),
+}
+
 }
 
 //users search for a  transporter
 #[ic_cdk::query]
 fn get_a_transporter(payload:SearchPayload)->Result<Transporter,String>{
+    
     TRANSPORTER_STORAGE.with(|storage|{
         let transporter=storage.borrow().iter().find(|(_,user)|user.name==payload.transportername);
         match transporter{
@@ -465,5 +459,8 @@ if !transporter_is_owner{
      USER_COMPLAIN_STORAGE.with(|storage| storage.borrow_mut().insert(id, new_user_complain.clone()));
      return Ok(new_user_complain);
   }
-
+//helper unction for updates
+fn do_insert(trans:&Transporter){
+    TRANSPORTER_STORAGE.with(|service|service.borrow_mut().insert(trans.id,trans.clone()));
+}
 ic_cdk::export_candid!();
