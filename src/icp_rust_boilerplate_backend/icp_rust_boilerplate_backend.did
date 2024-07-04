@@ -1,0 +1,87 @@
+type Complain = record {
+  id : nat64;
+  complaineremail : text;
+  created_at : nat64;
+  complain : text;
+  complainerusername : text;
+};
+type ComplainPayload = record {
+  complaineremail : text;
+  complain : text;
+  complainerusername : text;
+};
+type DeletePayload = record { ownerusername : text };
+type Errors = variant {
+  MissingCredentials : record { msg : text };
+  NotFound : record { msg : text };
+  OnyOwner : record { msg : text };
+  TansporterNameAlradyEXist : record { msg : text };
+  BusWithSameRegistrationExist : record { msg : text };
+};
+type RaiseQuestion = record {
+  id : nat64;
+  usernamemail : text;
+  question : text;
+  created_at : nat64;
+};
+type RaiseQuestionPayload = record { question : text; usernameemail : text };
+type Result = variant { Ok : vec Transporter; Err : text };
+type Result_1 = variant { Ok : Transporter; Err : text };
+type Result_2 = variant { Ok : Complain; Err : text };
+type Result_3 = variant { Ok : RaiseQuestion; Err : text };
+type Result_4 = variant { Ok : Transporter; Err : Errors };
+type Result_5 = variant { Ok : UsersComplainAboutTransporter; Err : text };
+type SearchPayload = record { transportername : text };
+type Transporter = record {
+  id : nat64;
+  websiteurl : text;
+  owner : text;
+  name : text;
+  created_at : nat64;
+  trucknumber : text;
+  serviceemail : text;
+  capacityweight : text;
+  route : text;
+};
+type TransporterPayload = record {
+  websiteurl : text;
+  ownername : text;
+  trucknumber : text;
+  serviceemail : text;
+  capacityweight : text;
+  transport_name : text;
+  route : text;
+};
+type UpdateTransporterPayload = record {
+  id : nat64;
+  websiteurl : text;
+  ownername : text;
+  trucknumber : text;
+  serviceemail : text;
+  capacityweight : text;
+  transport_name : text;
+  route : text;
+};
+type UserComplainPayload = record {
+  id : nat64;
+  complaineremail : text;
+  complain : text;
+  transportername : text;
+};
+type UsersComplainAboutTransporter = record {
+  id : nat64;
+  complaineremail : text;
+  created_at : nat64;
+  complain : text;
+  transportername : text;
+};
+service : {
+  get_all_transporters : () -> (Result) query;
+  get_transporter : (SearchPayload) -> (Result_1) query;
+  launch_a_complain : (ComplainPayload) -> (Result_2);
+  raise_question : (RaiseQuestionPayload) -> (Result_3);
+  registertransporter : (TransporterPayload) -> (Result_1);
+  remove_your_truck_from_acme : (nat64, DeletePayload) -> (Result_4);
+  update_transporter : (UpdateTransporterPayload) -> (Result_1);
+  user_complain : (UserComplainPayload) -> (Result_5);
+}
