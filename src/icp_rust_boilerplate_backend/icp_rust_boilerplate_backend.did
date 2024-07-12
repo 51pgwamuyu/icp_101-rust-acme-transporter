@@ -12,10 +12,10 @@ type ComplainPayload = record {
 };
 type DeletePayload = record { ownerusername : text };
 type Errors = variant {
+  TransporterNameAlreadyExist : record { msg : text };
   MissingCredentials : record { msg : text };
+  OnlyOwner : record { msg : text };
   NotFound : record { msg : text };
-  OnyOwner : record { msg : text };
-  TansporterNameAlradyEXist : record { msg : text };
   BusWithSameRegistrationExist : record { msg : text };
 };
 type RaiseQuestion = record {
@@ -25,12 +25,14 @@ type RaiseQuestion = record {
   created_at : nat64;
 };
 type RaiseQuestionPayload = record { question : text; usernameemail : text };
-type Result = variant { Ok : Transporter; Err : text };
-type Result_1 = variant { Ok : vec Transporter; Err : text };
-type Result_2 = variant { Ok : Transporter; Err : Errors };
-type Result_3 = variant { Ok : Complain; Err : text };
-type Result_4 = variant { Ok : UsersComplainAboutTransporter; Err : text };
-type Result_5 = variant { Ok : RaiseQuestion; Err : text };
+type Result = variant { Ok : Complain; Err : text };
+type Result_1 = variant { Ok : Transporter; Err : text };
+type Result_2 = variant { Ok : vec Complain; Err : text };
+type Result_3 = variant { Ok : vec RaiseQuestion; Err : text };
+type Result_4 = variant { Ok : vec Transporter; Err : text };
+type Result_5 = variant { Ok : Transporter; Err : Errors };
+type Result_6 = variant { Ok : UsersComplainAboutTransporter; Err : text };
+type Result_7 = variant { Ok : RaiseQuestion; Err : text };
 type SearchPayload = record { transportername : text };
 type Transporter = record {
   id : nat64;
@@ -44,16 +46,6 @@ type Transporter = record {
   route : text;
 };
 type TransporterPayload = record {
-  ownername : text;
-  trucknumber : text;
-  phonenumber : text;
-  serviceemail : text;
-  capacityweight : text;
-  transport_name : text;
-  route : text;
-};
-type UpdateTransporterPayload = record {
-  id : nat64;
   ownername : text;
   trucknumber : text;
   phonenumber : text;
@@ -76,12 +68,14 @@ type UsersComplainAboutTransporter = record {
   transportername : text;
 };
 service : {
-  get_a_transporter : (SearchPayload) -> (Result) query;
-  get_all_transporters : () -> (Result_1) query;
-  registertransporter : (TransporterPayload) -> (Result);
-  remove_your_truck_from_company : (nat64, DeletePayload) -> (Result_2);
-  transporter_launch_a_complain : (ComplainPayload) -> (Result_3);
-  transporter_update_details : (nat64, UpdateTransporterPayload) -> (Result);
-  users_complain : (UserComplainPayload) -> (Result_4);
-  users_raise_question : (RaiseQuestionPayload) -> (Result_5);
+  delete_complain : (nat64) -> (Result);
+  get_a_transporter : (SearchPayload) -> (Result_1) query;
+  get_all_complains : () -> (Result_2) query;
+  get_all_questions : () -> (Result_3) query;
+  get_all_transporters : () -> (Result_4) query;
+  register_transporter : (TransporterPayload) -> (Result_1);
+  remove_your_truck_from_company : (nat64, DeletePayload) -> (Result_5);
+  transporter_launch_a_complain : (ComplainPayload) -> (Result);
+  users_complain : (UserComplainPayload) -> (Result_6);
+  users_raise_question : (RaiseQuestionPayload) -> (Result_7);
 }
