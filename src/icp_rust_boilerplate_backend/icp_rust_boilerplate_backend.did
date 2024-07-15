@@ -53,7 +53,7 @@ type TransporterPayload = record {
   route : text;
 };
 type UpdateTransporterPayload = record {
-  id : nat64;
+  truckid : nat64;
   ownername : text;
   trucknumber : text;
   phonenumber : text;
@@ -81,7 +81,7 @@ service : {
   registertransporter : (TransporterPayload) -> (Result);
   remove_your_truck_from_company : (nat64, DeletePayload) -> (Result_2);
   transporter_launch_a_complain : (ComplainPayload) -> (Result_3);
-  transporter_update_details : (nat64, UpdateTransporterPayload) -> (Result);
+  transporter_update_details : (UpdateTransporterPayload) -> (Result);
   users_complain : (UserComplainPayload) -> (Result_4);
   users_raise_question : (RaiseQuestionPayload) -> (Result_5);
 }

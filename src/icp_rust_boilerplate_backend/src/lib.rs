@@ -168,6 +168,7 @@ struct UpdateTransporterPayload{
     route:String,
     trucknumber:String,
     capacityweight:String,
+    truckid:u64,
 }
 #[derive(candid::CandidType,Serialize,Deserialize,Default)]
 struct DeletePayload{
@@ -192,12 +193,12 @@ enum Errors{
 fn registertransporter(payload: TransporterPayload) -> Result<Transporter, String> {
     // Validate the payload to ensure that the required fields are present
     if payload.serviceemail.is_empty()
-        && payload.ownername.is_empty()
-        && payload.transport_name.is_empty()
-        && payload.phonenumber.is_empty()
-        && payload.route.is_empty()
-        && payload.trucknumber.is_empty()
-        && payload.capacityweight.is_empty()
+        ||payload.ownername.is_empty()
+        ||payload.transport_name.is_empty()
+        ||payload.phonenumber.is_empty()
+        ||payload.route.is_empty()
+        || payload.trucknumber.is_empty()
+        || payload.capacityweight.is_empty()
     {
         return Err("All fields are required".to_string());
     }
@@ -275,8 +276,8 @@ fn transporter_launch_a_complain(payload:ComplainPayload)->Result<Complain, Stri
 
       // Validate the payload to ensure that the required fields are present
       if payload.complain.is_empty()
-      && payload.complaineremail.is_empty()
-      && payload.complainerusername.is_empty()
+      || payload.complaineremail.is_empty()
+      || payload.complainerusername.is_empty()
        {
           return Err("All fields are required".to_string());
        }
@@ -347,14 +348,14 @@ return Ok(new_question);
 
 //transporter update details of his truck
 #[ic_cdk::update]
-fn transporter_update_details(id:u64,payload:UpdateTransporterPayload)->Result<Transporter,String>{
-    if payload.serviceemail.is_empty()
-        && payload.ownername.is_empty()
-        && payload.transport_name.is_empty()
-        && payload.phonenumber.is_empty()
-        && payload.route.is_empty()
-        && payload.trucknumber.is_empty()
-        && payload.capacityweight.is_empty()
+fn transporter_update_details(payload:UpdateTransporterPayload)->Result<Transporter,String>{
+     if payload.serviceemail.is_empty()
+        ||payload.ownername.is_empty()
+        || payload.transport_name.is_empty()
+        || payload.phonenumber.is_empty()
+        ||payload.route.is_empty()
+        ||payload.trucknumber.is_empty()
+        ||payload.capacityweight.is_empty()
     {
         return Err("Ensure all credentials are inserted".to_string());
     }
@@ -363,7 +364,7 @@ fn transporter_update_details(id:u64,payload:UpdateTransporterPayload)->Result<T
         return Err("Invalid email format".to_string());
     }
 
-match TRANSPORTER_STORAGE.with(|service|service.borrow().get(&id)){
+match TRANSPORTER_STORAGE.with(|service|service.borrow().get(&payload.truckid)){
     Some(mut trans)=>{
                         trans.owner=payload.ownername;
                         trans.name=payload.transport_name;
@@ -427,8 +428,8 @@ if !transporter_is_owner{
   #[ic_cdk::update]
   fn users_complain(payload:UserComplainPayload)->Result<UsersComplainAboutTransporter,String>{
     if payload.complain.is_empty()
-    && payload.complaineremail.is_empty()
-    && payload.transportername.is_empty()
+    ||payload.complaineremail.is_empty()
+    || payload.transportername.is_empty()
      {
         return Err("some fields are missing".to_string());
      }
