@@ -6,18 +6,12 @@ type Complain = record {
   complainerusername : text;
 };
 type ComplainPayload = record {
+  id : nat64;
   complaineremail : text;
   complain : text;
   complainerusername : text;
 };
-type DeletePayload = record { ownerusername : text };
-type Errors = variant {
-  MissingCredentials : record { msg : text };
-  NotFound : record { msg : text };
-  OnyOwner : record { msg : text };
-  TansporterNameAlradyEXist : record { msg : text };
-  BusWithSameRegistrationExist : record { msg : text };
-};
+type DeletePayload = record { id : nat64 };
 type RaiseQuestion = record {
   id : nat64;
   usernamemail : text;
@@ -27,11 +21,11 @@ type RaiseQuestion = record {
 type RaiseQuestionPayload = record { question : text; usernameemail : text };
 type Result = variant { Ok : Transporter; Err : text };
 type Result_1 = variant { Ok : vec Transporter; Err : text };
-type Result_2 = variant { Ok : Transporter; Err : Errors };
+type Result_2 = variant { Ok : text; Err : text };
 type Result_3 = variant { Ok : Complain; Err : text };
 type Result_4 = variant { Ok : UsersComplainAboutTransporter; Err : text };
 type Result_5 = variant { Ok : RaiseQuestion; Err : text };
-type SearchPayload = record { transportername : text };
+type SearchPayload = record { transporterid : nat64 };
 type Transporter = record {
   id : nat64;
   owner : text;
@@ -79,7 +73,7 @@ service : {
   get_a_transporter : (SearchPayload) -> (Result) query;
   get_all_transporters : () -> (Result_1) query;
   registertransporter : (TransporterPayload) -> (Result);
-  remove_your_truck_from_company : (nat64, DeletePayload) -> (Result_2);
+  remove_your_truck_from_company : (DeletePayload) -> (Result_2);
   transporter_launch_a_complain : (ComplainPayload) -> (Result_3);
   transporter_update_details : (UpdateTransporterPayload) -> (Result);
   users_complain : (UserComplainPayload) -> (Result_4);

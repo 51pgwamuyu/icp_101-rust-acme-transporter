@@ -143,7 +143,7 @@ struct TransporterPayload{
 #[derive(candid::CandidType,Serialize,Deserialize,Default)]
 
 struct SearchPayload{
-    transportername:String,
+    transporterid:u64,
 }
 
 #[derive(candid::CandidType,Serialize,Deserialize,Default)]
@@ -151,6 +151,7 @@ struct ComplainPayload{
     complaineremail:String,
     complain:String,
     complainerusername:String,
+    id:u64
 
 }
 #[derive(candid::CandidType,Serialize,Deserialize,Default)]
@@ -172,7 +173,7 @@ struct UpdateTransporterPayload{
 }
 #[derive(candid::CandidType,Serialize,Deserialize,Default)]
 struct DeletePayload{
-    ownerusername:String,
+    id:u64
 }
 #[derive(candid::CandidType,Serialize,Deserialize,Default)]
 struct UserComplainPayload{
@@ -226,7 +227,7 @@ fn registertransporter(payload: TransporterPayload) -> Result<Transporter, Strin
         .any(|(_,val)| val.owner == payload.ownername)
 });
 if ownername_exists {
-    return Err("The usernam already exists".to_string());
+    return Err("The username already exists".to_string());
 }
     let id = ID_COUNTER
         .with(|counter| {
@@ -256,18 +257,35 @@ if ownername_exists {
 //Function to retrieve all transporters
 #[ic_cdk::query]
 fn get_all_transporters() -> Result<Vec<Transporter>, String> {
-    TRANSPORTER_STORAGE.with(|storage| {
-        let stable_btree_map = &*storage.borrow();
-        let records: Vec<Transporter> = stable_btree_map
+
+    let transporters = TRANSPORTER_STORAGE.with(|storage| {
+        storage
+            .borrow()
             .iter()
-            .map(|(_, record)| record.clone())
-            .collect();
-        if records.is_empty() {
-            Err("No transporter found.".to_string())
-        } else {
-            Ok(records)
-        }
-    })
+            .map(|(_, trans)| trans.clone())
+            .collect::<Vec<Transporter>>()
+    });
+
+    if  transporters.is_empty() {
+        return Err("No transporter  found.".to_string());
+    }
+
+    else {
+        Ok(transporters)
+    }
+
+    // TRANSPORTER_STORAGE.with(|storage| {
+    //     let stable_btree_map = &*storage.borrow();
+    //     let records: Vec<Transporter> = stable_btree_map
+    //         .iter()
+    //         .map(|(_, record)| record.clone())
+    //         .collect();
+    //     if records.is_empty() {
+    //         Err("No transporter found.".to_string())
+    //     } else {
+    //         Ok(records)
+    //     }
+    // })
 }
 
 //function where transporter launch a complain aganist the company
@@ -286,16 +304,21 @@ fn transporter_launch_a_complain(payload:ComplainPayload)->Result<Complain, Stri
         return Err("enter correct email format".to_string());
     }
 
-    //check the user owns a truck
-    let ownstruck:bool=TRANSPORTER_STORAGE.with(|storage| {
-        storage
-            .borrow()
-            .iter()
-            .any(|(_,val)| val.owner == payload.complainerusername)
-    });
-    if !ownstruck {
-        return Err("only those that owns trucks can complain".to_string());
+    //check if transporter is registered
+    let transporter =TRANSPORTER_STORAGE.with(|storage| storage.borrow().get(&payload.id));
+    match transporter {
+        Some(_) => (),
+        None => return Err("you are not registered to acme transporters company.".to_string()),
     }
+    // let ownstruck:bool=TRANSPORTER_STORAGE.with(|storage| {
+    //     storage
+    //         .borrow()
+    //         .iter()
+    //         .any(|(_,val)| val.owner == payload.complainerusername)
+    // });
+    // if !ownstruck {
+    //     return Err("only those that owns trucks can complain".to_string());
+    // }
     let id = ID_COUNTER
         .with(|counter| {
             let current_value = *counter.borrow().get();
@@ -385,43 +408,32 @@ match TRANSPORTER_STORAGE.with(|service|service.borrow().get(&payload.truckid)){
 //users search for a  transporter
 #[ic_cdk::query]
 fn get_a_transporter(payload:SearchPayload)->Result<Transporter,String>{
-    
-    TRANSPORTER_STORAGE.with(|storage|{
-        let transporter=storage.borrow().iter().find(|(_,user)|user.name==payload.transportername);
-        match transporter{
-            Some((_,record))=>Ok(record.clone()),
-            None=>Err("Not Found".to_string()),
-        }
-    })
+    let transporter = TRANSPORTER_STORAGE.with(|storage| storage.borrow().get(&payload.transporterid));
+    match transporter {
+        Some(transporter) => Ok(transporter),
+        None => Err("Volunteer with the provided ID does not exist.".to_string()),
+    }
+    // TRANSPORTER_STORAGE.with(|storage|{
+    //     let transporter=storage.borrow().iter().find(|(_,user)|user.name==payload.transportername);
+    //     match transporter{
+    //         Some((_,record))=>Ok(record.clone()),
+    //         None=>Err("Not Found".to_string()),
+    //     }
+    // })
 }
 //transporter remove his truck from company
 #[ic_cdk::update]
-  fn remove_your_truck_from_company(id:u64,payload:DeletePayload)->Result<Transporter,Errors>{
-  //verify payloads
-  if payload.ownerusername.is_empty()
-
-   {
-      return Err(Errors::MissingCredentials { msg:format! (
-        "some credentials are missing",
-      ) });
-   }
+  fn remove_your_truck_from_company(payload:DeletePayload)->Result<String,String>{
  //verify  transporter is the owner
    //check the user owns a truck
-   let transporter_is_owner:bool=TRANSPORTER_STORAGE.with(|storage| {
-    storage
-        .borrow()
-        .iter()
-        .any(|(_,val)| val.owner == payload.ownerusername)
-});
-if !transporter_is_owner{
-    return Err(Errors::OnyOwner { msg:format! (
-        "you are not authorizd to perform thsi action only owner") });
-}
-    match TRANSPORTER_STORAGE.with(|storage|storage.borrow_mut().remove(&id)){
-        Some(val)=>Ok(val),
-        None=>Err(Errors::NotFound { msg:format! (
-            "coulde not delete",
-        ) })
+   let transporter =TRANSPORTER_STORAGE.with(|storage| storage.borrow().get(&payload.id));
+    match transporter {
+        Some(_) => (),
+        None => return Err("you are not registered to acme transporters company.".to_string()),
+    }
+    match TRANSPORTER_STORAGE.with(|storage|storage.borrow_mut().remove(&payload.id)){
+        Some(_val)=>Ok("tou have opted out of came transporters.thank you".to_string()),
+        None=>Err("coulde not delete".to_string(),)
     }
   }
     //users cpmplain about a transporter
@@ -433,17 +445,6 @@ if !transporter_is_owner{
      {
         return Err("some fields are missing".to_string());
      }
-
-     //validate transporter
-      let itstransporter:bool=TRANSPORTER_STORAGE.with(|storage| {
-        storage
-            .borrow()
-            .iter()
-            .any(|(_,val)| val.owner == payload.transportername)
-    });
-    if !itstransporter {
-        return Err("the transporter is not registered under acme tranporters".to_string());
-    }
      let id = ID_COUNTER
         .with(|counter| {
             let current_value = *counter.borrow().get();
